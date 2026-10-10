@@ -26,7 +26,7 @@ export function Navbar() {
   return <header className="site-header">
     <div className="container nav-top">
       <Link href="/" className="brand focus-ring" onClick={() => setOpen(false)}>
-        <span className="brand-mark">🛒</span><span><strong>বাজার দর</strong><small>আজ ২৬ কার্তিক ১৪৩৩</small></span>
+        <span className="brand-mark">🛒</span><span><strong>বাজার দর</strong><small>{new Intl.DateTimeFormat("bn-BD", { dateStyle: "long" }).format(new Date())}</small></span>
       </Link>
       <div className="nav-actions">
         {user ? <>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { categories, fetchProducts, formatTaka } from "@/lib/data";
+import { categories, fetchProducts } from "@/lib/data";
 import type { Product } from "@/lib/types";
 import { ProductCard } from "@/components/product-card";
 import { ProductGridSkeleton } from "@/components/skeleton";
