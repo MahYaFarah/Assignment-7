@@ -7,10 +7,10 @@ import { findProduct, formatTaka, fetchProducts, toBengaliDigits } from "@/lib/d
 import type { Product } from "@/lib/types";
 import { ProductGridSkeleton } from "@/components/skeleton";
 
-export function ProductDetailPage({ slug }: { slug: string }) {
-  const [product, setProduct] = useState<Product | undefined>(() => findProduct(slug));
+export function ProductDetailPage({ slug, initialProduct }: { slug: string; initialProduct?: Product }) {
+  const [product, setProduct] = useState<Product | undefined>(() => initialProduct ?? findProduct(slug));
   const [loading, setLoading] = useState(true);
-  useEffect(() => { fetchProducts().then((items) => setProduct(items.find((item) => item.slug === slug || item.id === slug) ?? findProduct(slug))).catch(() => undefined).finally(() => setLoading(false)); }, [slug]);
+  useEffect(() => { if (initialProduct) { setLoading(false); return; } fetchProducts().then((items) => setProduct(items.find((item) => item.slug === slug || item.id === slug) ?? findProduct(slug))).catch(() => undefined).finally(() => setLoading(false)); }, [initialProduct, slug]);
   if (loading) return <div className="container page-space"><ProductGridSkeleton count={1} /></div>;
   if (!product) return <div className="container"><div className="empty-state surface-card"><div className="empty-icon">🧺</div><h2>পণ্যটি খুঁজে পাওয়া যায়নি</h2><p>এই পণ্যের বাজারদর এখনো যোগ করা হয়নি।</p><Link className="primary-button" href="/">হোম পেজে ফিরে যান</Link></div></div>;
   const average = Math.round((product.minPrice + product.maxPrice + product.price) / 3);

@@ -37,6 +37,7 @@ Copy `.env.example` to `.env` and provide a 32+ character `BETTER_AUTH_SECRET`, 
 ---
 # API's
 
+## Main_API_URL: https://openapi.programming-hero.com/api/bazardor
 ## BASE_URL_1: https://api.api-store.workers.dev/api/bazardor
 ## BASE_URL_2: https://api.abcz.workers.dev/api/bazardor (alternative)
 

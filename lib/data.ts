@@ -1,7 +1,10 @@
 import type { Category, Product } from "@/lib/types";
 
-export const API_BASE = "https://api.api-store.workers.dev/api/bazardor";
-export const API_FALLBACK = "https://api.abcz.workers.dev/api/bazardor";
+export const API_BASE = "https://openapi.programming-hero.com/api/bazardor";
+export const API_FALLBACKS = [
+  "https://api.api-store.workers.dev/api/bazardor",
+  "https://api.abcz.workers.dev/api/bazardor",
+];
 
 export const categories: Category[] = [
   { slug: "chal", name: "চাল", icon: "🍚" },
@@ -49,30 +52,36 @@ export const numericPrice = (product: Product) => normalizeDigits(product.price)
 export const findProduct = (slug: string) => fallbackProducts.find((item) => item.slug === slug || item.id === slug);
 
 function normalizeProduct(raw: any, index: number): Product {
-  const price = normalizeDigits(raw.price ?? raw.current_price ?? raw.today_price ?? raw.average_price) || fallbackProducts[index % fallbackProducts.length].price;
-  const change = Number(raw.change ?? raw.price_change ?? raw.percent_change ?? fallbackProducts[index % fallbackProducts.length].change) || 0;
   const fallback = fallbackProducts[index % fallbackProducts.length];
+  const markets = Array.isArray(raw.markets) ? raw.markets : [];
+  const rawChange = typeof raw.change === "object" ? raw.change?.pct : raw.change;
+  const price = normalizeDigits(raw.today ?? raw.price ?? raw.current_price ?? raw.today_price ?? raw.average_price) || fallback.price;
+  const marketPrices = markets.flatMap((market: any) => [normalizeDigits(market.min), normalizeDigits(market.max)]).filter(Boolean);
+  const minPrice = normalizeDigits(raw.min_price ?? raw.minimum_price) || (marketPrices.length ? Math.min(...marketPrices) : Math.round(price * 0.95));
+  const maxPrice = normalizeDigits(raw.max_price ?? raw.maximum_price) || (marketPrices.length ? Math.max(...marketPrices) : Math.round(price * 1.05));
+  const unitLabels: Record<string, string> = { kg: "প্রতি কেজি", kilogram: "প্রতি কেজি", liter: "প্রতি লিটার", litre: "প্রতি লিটার", dozen: "প্রতি ডজন", piece: "প্রতি পিস", pcs: "প্রতি পিস" };
   return {
     ...fallback,
     id: String(raw.id ?? fallback.id),
     slug: String(raw.slug ?? raw.id ?? fallback.slug),
-    name: raw.name ?? raw.title ?? fallback.name,
+    name: raw.nameBn ?? raw.name ?? raw.title ?? fallback.name,
     englishName: raw.englishName ?? raw.name_en ?? fallback.englishName,
-    emoji: raw.emoji ?? raw.icon ?? fallback.emoji,
+    emoji: raw.image ?? raw.emoji ?? raw.icon ?? raw.categoryIcon ?? fallback.emoji,
     category: raw.category?.slug ?? raw.category ?? fallback.category,
-    categoryLabel: raw.category?.name ?? raw.category_name ?? fallback.categoryLabel,
-    unit: raw.unit ?? raw.unit_name ?? fallback.unit,
+    categoryLabel: raw.categoryNameBn ?? raw.category?.name ?? raw.category_name ?? fallback.categoryLabel,
+    unit: unitLabels[String(raw.unit ?? "").toLowerCase()] ?? raw.unit_name ?? fallback.unit,
     price,
-    minPrice: normalizeDigits(raw.min_price ?? raw.minimum_price) || Math.round(price * 0.95),
-    maxPrice: normalizeDigits(raw.max_price ?? raw.maximum_price) || Math.round(price * 1.05),
-    change,
+    minPrice,
+    maxPrice,
+    change: Number(rawChange ?? fallback.change) || 0,
     description: raw.description ?? raw.summary ?? fallback.description,
-    bazars: Array.isArray(raw.bazars) ? raw.bazars : bazars(price),
+    bazars: Array.isArray(raw.bazars) ? raw.bazars : markets.length ? markets.map((market: any) => ({ bazar: market.market ?? "", price: Math.round((normalizeDigits(market.min) + normalizeDigits(market.max)) / 2), updatedAt: market.division ?? "আজ" })) : bazars(price),
   };
 }
 
 export async function fetchProducts(category?: string): Promise<Product[]> {
-  const urls = [category ? `${API_BASE}/products?category=${encodeURIComponent(category)}` : `${API_BASE}/products`, category ? `${API_FALLBACK}/products?category=${encodeURIComponent(category)}` : `${API_FALLBACK}/products`];
+  const bases = [API_BASE, ...API_FALLBACKS];
+  const urls = bases.map((base) => category ? `${base}/products?category=${encodeURIComponent(category)}` : `${base}/products`);
   for (const url of urls) {
     try {
       const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(3500) });
@@ -83,4 +92,32 @@ export async function fetchProducts(category?: string): Promise<Product[]> {
     } catch { /* use fallback data */ }
   }
   return category ? fallbackProducts.filter((item) => item.category === category) : fallbackProducts;
+}
+
+export async function fetchCategories(): Promise<Category[]> {
+  for (const base of [API_BASE, ...API_FALLBACKS]) {
+    try {
+      const response = await fetch(`${base}/categories`, { cache: "no-store", signal: AbortSignal.timeout(3500) });
+      if (!response.ok) continue;
+      const json = await response.json();
+      const records = Array.isArray(json) ? json : json.categories ?? json.data ?? [];
+      if (records.length) return records.map((raw: any) => ({ slug: String(raw.slug ?? raw.id), name: raw.nameBn ?? raw.name ?? String(raw.slug ?? raw.id), icon: raw.icon ?? raw.categoryIcon ?? "🛒", count: raw.count }));
+    } catch { /* use the local category list */ }
+  }
+  return categories;
+}
+
+export async function fetchProduct(identifier: string): Promise<Product | undefined> {
+  const encoded = encodeURIComponent(identifier);
+  for (const base of [API_BASE, ...API_FALLBACKS]) {
+    try {
+      const response = await fetch(`${base}/products/${encoded}`, { cache: "no-store", signal: AbortSignal.timeout(3500) });
+      if (!response.ok) continue;
+      const json = await response.json();
+      const raw = Array.isArray(json) ? json[0] : json.product ?? json.data ?? json;
+      if (raw && !Array.isArray(raw)) return normalizeProduct(raw, 0);
+    } catch { /* try the next documented API */ }
+  }
+  const products = await fetchProducts();
+  return products.find((item) => item.slug === identifier || item.id === identifier);
 }
