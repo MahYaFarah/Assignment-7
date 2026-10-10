@@ -1,37 +1,26 @@
-// export type LocalUser = { name: string; email: string; provider?: string };
-// const KEY = "bazardor-user";
-
-// export function getStoredUser(): LocalUser | null {
-//   if (typeof window === "undefined") return null;
-//   try { return JSON.parse(window.localStorage.getItem(KEY) || "null") as LocalUser | null; } catch { return null; }
-// }
-
-// export function setStoredUser(user: LocalUser) { window.localStorage.setItem(KEY, JSON.stringify(user)); window.dispatchEvent(new Event("bazardor-auth")); }
-// export function clearStoredUser() { window.localStorage.removeItem(KEY); window.dispatchEvent(new Event("bazardor-auth")); }
-
-
 import { betterAuth } from "better-auth";
-import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
+import { MongoClient } from "mongodb";
 
-const client = new MongoClient(process.env.MONGODB_URL as string);
-const db = client.db();
+const uri = process.env.MONGODB_URL;
+if (!uri) throw new Error("MONGODB_URL is required for authentication");
+
+// Reuse the pool during Next.js development reloads.
+const globalForMongo = globalThis as typeof globalThis & { bazarDorMongoClient?: MongoClient };
+const client = globalForMongo.bazarDorMongoClient ?? new MongoClient(uri, { serverSelectionTimeoutMS: 10000 });
+if (process.env.NODE_ENV !== "production") globalForMongo.bazarDorMongoClient = client;
 
 export const auth = betterAuth({
-    emailAndPassword: { 
-    enabled: true, 
-  },
-
+  database: mongodbAdapter(client.db(process.env.MONGODB_DB_NAME || "bazardor"), { client }),
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL,
+  emailAndPassword: { enabled: true, minPasswordLength: 6 },
   socialProviders: {
-        google: { 
-            clientId: process.env.GOOGLE_CLIENT_ID as string, 
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string, 
-        },
-        github: { 
-            clientId: process.env.GITHUB_CLIENT_ID as string, 
-            clientSecret: process.env.GITHUB_CLIENT_SECRET as string, 
-        },
-  database: mongodbAdapter(db, {
-    client,
-  }),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? { google: { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET } }
+      : {}),
+    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+      ? { github: { clientId: process.env.GITHUB_CLIENT_ID, clientSecret: process.env.GITHUB_CLIENT_SECRET } }
+      : {}),
+  },
 });

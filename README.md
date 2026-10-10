@@ -9,6 +9,10 @@
 - **Run locally:** `npm install` তারপর `npm run dev`
 - **Production check:** `npm run build` এবং `npm run start`
 
+### Authentication and MongoDB setup
+
+Copy `.env.example` to `.env` and provide a 32+ character `BETTER_AUTH_SECRET`, your `BETTER_AUTH_URL`, a MongoDB Atlas `MONGODB_URL`, and the Google/GitHub OAuth credentials. The app uses BetterAuth's MongoDB adapter for email/password and social sessions; MongoDB collections are created automatically. Configure each OAuth callback as `/api/auth/callback/google` and `/api/auth/callback/github` on the same host as `BETTER_AUTH_URL`.
+
 ## Key features
 
 1. বাংলা নেভিগেশন, active category chips, responsive hero banner, date label ও infinite price ticker

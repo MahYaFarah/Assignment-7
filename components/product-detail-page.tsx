@@ -1,20 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, LockKeyhole } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { findProduct, formatTaka, fetchProducts, toBengaliDigits } from "@/lib/data";
-import { getStoredUser, type LocalUser } from "@/lib/auth";
 import type { Product } from "@/lib/types";
 import { ProductGridSkeleton } from "@/components/skeleton";
 
 export function ProductDetailPage({ slug }: { slug: string }) {
   const [product, setProduct] = useState<Product | undefined>(() => findProduct(slug));
-  const [user, setUser] = useState<LocalUser | null>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { const stored = getStoredUser(); setUser(stored); if (!stored) { toast("পণ্যের বিস্তারিত দেখতে সাইন ইন করুন"); return; } fetchProducts().then((items) => setProduct(items.find((item) => item.slug === slug || item.id === slug) ?? findProduct(slug))).finally(() => setLoading(false)); }, [slug]);
-  if (!user) return <div className="container"><div className="empty-state surface-card"><div className="empty-icon"><LockKeyhole size={42} /></div><h2>সাইন ইন প্রয়োজন</h2><p>বাজারভিত্তিক বিস্তারিত দাম দেখতে আপনার অ্যাকাউন্টে প্রবেশ করুন।</p><Link className="primary-button focus-ring" href={`/signin?next=/product/${slug}`}>সাইন ইন করুন</Link></div></div>;
+  useEffect(() => { fetchProducts().then((items) => setProduct(items.find((item) => item.slug === slug || item.id === slug) ?? findProduct(slug))).catch(() => undefined).finally(() => setLoading(false)); }, [slug]);
   if (loading) return <div className="container page-space"><ProductGridSkeleton count={1} /></div>;
   if (!product) return <div className="container"><div className="empty-state surface-card"><div className="empty-icon">🧺</div><h2>পণ্যটি খুঁজে পাওয়া যায়নি</h2><p>এই পণ্যের বাজারদর এখনো যোগ করা হয়নি।</p><Link className="primary-button" href="/">হোম পেজে ফিরে যান</Link></div></div>;
   const average = Math.round((product.minPrice + product.maxPrice + product.price) / 3);
