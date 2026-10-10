@@ -1,4 +1,28 @@
-# 💪 B14-A7-Bazar Dor
+# 🛒 বাজার দর — BazarDor
+
+বাংলাদেশের নিত্যপ্রয়োজনীয় পণ্যের বাজারদর এক নজরে দেখার জন্য তৈরি একটি responsive Next.js অ্যাপ। এটি README-তে দেওয়া API-কে প্রথমে ব্যবহার করে এবং নেটওয়ার্ক সাময়িকভাবে না থাকলে একই data model-এর local fallback data দেখায়, তাই preview ও deployment দুটোতেই interface সচল থাকে।
+
+## Project overview
+
+- **Technologies:** Next.js App Router, React 19, TypeScript, CSS design tokens, BetterAuth-compatible authentication flow, react-hot-toast, Lucide icons
+- **Design direction:** supplied Figma and Penpot references থেকে নেওয়া Hind Siliguri typography, deep green ink, off-white canvas, rounded 16px cards, ticker strip and responsive product grids
+- **Run locally:** `npm install` তারপর `npm run dev`
+- **Production check:** `npm run build` এবং `npm run start`
+
+## Key features
+
+1. বাংলা নেভিগেশন, active category chips, responsive hero banner, date label ও infinite price ticker
+2. আজ দাম বেড়েছে, আজ দাম কমেছে এবং সব পণ্যের responsive card grid
+3. বিভাগভিত্তিক page-এ loading skeleton, empty state এবং বাংলা সংখ্যায় numeric sort
+4. protected product detail page-এ minimum, maximum, average ও বাজারভিত্তিক দাম
+5. sign in, sign up, Google-style social sign-in, toast feedback, profile ও update information flow
+6. unknown routes-এর 404 page, mobile/tablet/desktop layout এবং refresh-safe dynamic routes
+
+## Routes
+
+`/` · `/category/[slug]` · `/product/[slug]` · `/signin` · `/signup` · `/profile` · `/profile/update`
+
+---
 
 ---
 
