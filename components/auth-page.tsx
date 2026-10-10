@@ -59,7 +59,6 @@ export function AuthPage({ mode }: { mode: "signin" | "signup" }) {
       } else {
         const { error } = await authClient.signUp.email({ name: name.trim(), email: email.trim(), password });
         if (error) throw new Error(readableAuthError(error, "signup"));
-        await authClient.signOut();
         toast.success("অ্যাকাউন্ট তৈরি হয়েছে, এখন সাইন ইন করুন");
         router.push("/signin");
         router.refresh();
