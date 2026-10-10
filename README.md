@@ -185,8 +185,8 @@ Follow this documentation: https://better-auth.com/docs/concepts/users-accounts#
 Technology	Purpose
 - Next.js ->	Build the UI
 - App router(Next.js) +	Handle page navigation
-- Tailwind CSS + Any component library	Styling and responsiveness(DaisyUI, Hero UI)
-- TypeScript / JavaScript
+- Tailwind CSS + component library	Styling and responsiveness(DaisyUI, Hero UI)
+- TypeScript
 - BetterAuth
 
 ### 🚀 Deployment
