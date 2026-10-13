@@ -2,8 +2,26 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { MongoClient } from "mongodb";
 
-const uri = process.env.MONGODB_URL;
-if (!uri) throw new Error("MONGODB_URL is required for authentication");
+function originFrom(value: string | undefined) {
+  if (!value) return undefined;
+  try {
+    return new URL(value.includes("://") ? value : `https://${value}`).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+const uri = process.env.MONGODB_URL?.trim() || process.env.MONGODB_URI?.trim();
+if (!uri) throw new Error("MONGODB_URL (or MONGODB_URI) is required for authentication");
+
+const configuredAuthOrigin = originFrom(process.env.BETTER_AUTH_URL);
+const vercelOrigins = [
+  originFrom(process.env.VERCEL_URL),
+  originFrom(process.env.VERCEL_BRANCH_URL),
+  originFrom(process.env.VERCEL_PROJECT_PRODUCTION_URL),
+].filter((origin): origin is string => Boolean(origin));
+const authOrigin = configuredAuthOrigin || vercelOrigins[0];
+const trustedOrigins = [...new Set([authOrigin, ...vercelOrigins].filter((origin): origin is string => Boolean(origin)))];
 
 // Reuse the pool during Next.js development reloads.
 const globalForMongo = globalThis as typeof globalThis & { bazarDorMongoClient?: MongoClient };
@@ -11,9 +29,13 @@ const client = globalForMongo.bazarDorMongoClient ?? new MongoClient(uri, { serv
 if (process.env.NODE_ENV !== "production") globalForMongo.bazarDorMongoClient = client;
 
 export const auth = betterAuth({
-  database: mongodbAdapter(client.db(process.env.MONGODB_DB_NAME || "bazardor"), { client }),
+  // Some hosted Mongo deployments are standalone instances and do not support
+  // transactions. Better Auth can run the required writes sequentially, which
+  // keeps email sign-up working across both standalone and replica-set MongoDB.
+  database: mongodbAdapter(client.db(process.env.MONGODB_DB_NAME?.trim() || "bazardor"), { client, transaction: false }),
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: authOrigin,
+  ...(trustedOrigins.length > 0 ? { trustedOrigins } : {}),
   emailAndPassword: { enabled: true, minPasswordLength: 6, autoSignIn: false },
   socialProviders: {
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
