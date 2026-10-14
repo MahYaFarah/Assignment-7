@@ -224,8 +224,8 @@ Deploy your project on Vercel, Netlify, Cloudflare Pages, or anywhere else befor
 ## 📬 Submission
 Fill in both links before submitting:
 
-- Live Link:
-- GitHub Repository Link:
+- Live Link: https://b14-a7-bazar-dor-kappa.vercel.app/
+- GitHub Repository Link: https://github.com/MahYaFarah/Assignment-7.git
 
 
 ### Notes : You can use Bengali or English language for core website information or any kind of text.
