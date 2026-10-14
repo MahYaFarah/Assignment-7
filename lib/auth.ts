@@ -29,9 +29,7 @@ const client = globalForMongo.bazarDorMongoClient ?? new MongoClient(uri, { serv
 if (process.env.NODE_ENV !== "production") globalForMongo.bazarDorMongoClient = client;
 
 export const auth = betterAuth({
-  // Some hosted Mongo deployments are standalone instances and do not support
-  // transactions. Better Auth can run the required writes sequentially, which
-  // keeps email sign-up working across both standalone and replica-set MongoDB.
+
   database: mongodbAdapter(client.db(process.env.MONGODB_DB_NAME?.trim() || "bazardor"), { client, transaction: false }),
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: authOrigin,
