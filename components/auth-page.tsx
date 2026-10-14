@@ -6,7 +6,7 @@ import { FormEvent, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
 
-type AuthError = { code?: string; message?: string };
+type AuthError = { code?: string; message?: string; status?: number };
 
 function readableAuthError(
   error: AuthError | null | undefined,
@@ -24,15 +24,24 @@ function readableAuthError(
     case "UNAUTHORIZED":
       return "ইমেইল বা পাসওয়ার্ড সঠিক নয়।";
     case "DATABASE_ERROR":
+    case "FAILED_TO_CREATE_USER":
+    case "FAILED_TO_CREATE_SESSION":
     case "UNABLE_TO_CREATE_USER":
       return "সার্ভারের ডেটাবেসে সংযোগ হচ্ছে না। কিছুক্ষণ পর আবার চেষ্টা করুন।";
+    case "INVALID_ORIGIN":
+      return "এই ডোমেইন থেকে নিরাপদভাবে সাইন ইন করা যাচ্ছে না। Vercel-এর auth URL যাচাই করুন।";
     default:
+<<<<<<< HEAD
       return (
         error?.message ||
         (mode === "signin"
           ? "সাইন ইন ব্যর্থ হয়েছে।"
           : "অ্যাকাউন্ট তৈরি ব্যর্থ হয়েছে।")
       );
+=======
+      if (error?.status && error.status >= 500) return "সার্ভারের সঙ্গে সংযোগ হচ্ছে না। কিছুক্ষণ পর আবার চেষ্টা করুন।";
+      return error?.message || (mode === "signin" ? "সাইন ইন ব্যর্থ হয়েছে।" : "অ্যাকাউন্ট তৈরি ব্যর্থ হয়েছে।");
+>>>>>>> 080b4bc4ff7f0578b2bb380269a5c4882ce477f4
   }
 }
 
